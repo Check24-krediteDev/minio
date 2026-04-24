@@ -128,6 +128,14 @@ func runAllTests(suite *TestSuiteCommon, c *check) {
 	suite.TestBucketSQSNotificationWebHook(c)
 	suite.TestBucketSQSNotificationAMQP(c)
 	suite.TestUnsignedCVE(c)
+	
+	// CVE-2026-41145 tests
+	suite.TestQueryStringBypassCVE(c)
+	suite.TestExtractHandlerBypassCVE(c)
+	suite.TestLegitimateUnsignedTrailer(c)
+	suite.TestValidPresignedRequest(c)
+	suite.TestValidAuthorizationHeader(c)
+	
 	suite.TearDownSuite(c)
 }
 

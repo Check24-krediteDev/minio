@@ -2296,6 +2296,15 @@ func (api objectAPIHandlers) PutObjectExtractHandler(w http.ResponseWriter, r *h
 			writeErrorResponse(ctx, w, errorCodes.ToAPIErr(s3Err), r.URL)
 			return
 		}
+	case authTypeStreamingUnsignedTrailer:
+		// CVE-2026-41145 Fix: Handle unsigned trailer authentication for extract operations
+		// This case was missing, creating an authentication bypass vulnerability in PutObjectExtractHandler.
+		// Initialize unsigned stream chunked reader with proper signature verification.
+		reader, s3Err = newUnsignedV4ChunkedReader(r, true, r.Header.Get(xhttp.Authorization) != "")
+		if s3Err != ErrNone {
+			writeErrorResponse(ctx, w, errorCodes.ToAPIErr(s3Err), r.URL)
+			return
+		}
 	case authTypeSignedV2, authTypePresignedV2:
 		s3Err = isReqAuthenticatedV2(r)
 		if s3Err != ErrNone {

@@ -26,14 +26,32 @@ import (
 	"strings"
 )
 
+// verifyUnsignedTrailerSignature validates signatures for unsigned trailer requests.
+// CVE-2026-41145 Fix: Ensures proper signature verification for both Authorization header
+// and query-string credential authentication methods to prevent bypass vulnerabilities.
+func verifyUnsignedTrailerSignature(req *http.Request, hasAuthHeader bool) APIErrorCode {
+	if hasAuthHeader {
+		// Standard Authorization header signature verification
+		return doesSignatureMatch(unsignedPayloadTrailer, req, globalSite.Region(), serviceS3)
+	}
+	
+	// CVE-2026-41145 Fix: Verify query-string credentials when no Authorization header
+	// This prevents signature bypass when unsigned trailer is combined with presigned parameters
+	if isRequestPresignedSignatureV4(req) {
+		return doesPresignedSignatureMatch(unsignedPayloadTrailer, req, globalSite.Region(), serviceS3)
+	}
+	
+	// No signature required for genuine unsigned requests
+	return ErrNone
+}
+
 // newUnsignedV4ChunkedReader returns a new s3UnsignedChunkedReader that translates the data read from r
 // out of HTTP "chunked" format before returning it.
 // The s3ChunkedReader returns io.EOF when the final 0-length chunk is read.
 func newUnsignedV4ChunkedReader(req *http.Request, trailer bool, signature bool) (io.ReadCloser, APIErrorCode) {
-	if signature {
-		if errCode := doesSignatureMatch(unsignedPayloadTrailer, req, globalSite.Region(), serviceS3); errCode != ErrNone {
-			return nil, errCode
-		}
+	// Verify request signature before processing unsigned trailer payload
+	if errCode := verifyUnsignedTrailerSignature(req, signature); errCode != ErrNone {
+		return nil, errCode
 	}
 	if trailer {
 		// Discard anything unsigned.

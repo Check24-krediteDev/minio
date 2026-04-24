@@ -99,6 +99,7 @@ func isRequestUnsignedTrailerV4(r *http.Request) bool {
 		r.Method == http.MethodPut
 }
 
+
 // Authorization type.
 //
 //go:generate stringer -type=authType -trimprefix=authType $GOFILE
@@ -138,12 +139,15 @@ func getRequestAuthType(r *http.Request) (at authType) {
 		return authTypeStreamingSigned
 	} else if isRequestSignStreamingTrailerV4(r) {
 		return authTypeStreamingSignedTrailer
-	} else if isRequestUnsignedTrailerV4(r) {
-		return authTypeStreamingUnsignedTrailer
 	} else if isRequestSignatureV4(r) {
 		return authTypeSigned
 	} else if isRequestPresignedSignatureV4(r) {
+		// CVE-2026-41145 Fix: Check presigned auth before unsigned trailer
+		// This prevents auth type confusion when requests contain both
+		// presigned query parameters and STREAMING-UNSIGNED-PAYLOAD-TRAILER header
 		return authTypePresigned
+	} else if isRequestUnsignedTrailerV4(r) {
+		return authTypeStreamingUnsignedTrailer
 	} else if isRequestJWT(r) {
 		return authTypeJWT
 	} else if isRequestPostPolicySignatureV4(r) {
