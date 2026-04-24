@@ -72,11 +72,11 @@ func (s *TestSuiteCommon) TestQueryStringBypassCVE(c *check) {
 	// 2. But X-Amz-Content-Sha256 = STREAMING-UNSIGNED-PAYLOAD-TRAILER
 	// 3. No Authorization header
 	// Result: auth type becomes authTypeStreamingUnsignedTrailer instead of authTypePresigned
-	
+
 	req.Header.Set("X-Amz-Content-Sha256", unsignedPayloadTrailer)
 	req.Header.Set("X-Amz-Decoded-Content-Length", fmt.Sprintf("%d", len(testData)))
 	req.Header.Set("Content-Encoding", "aws-chunked")
-	
+
 	// Key vulnerability: The presigned signature in query is for UNSIGNED-PAYLOAD
 	// but we changed to STREAMING-UNSIGNED-PAYLOAD-TRAILER without re-signing
 	// This should be rejected, but due to auth type confusion, signature check is bypassed
@@ -143,7 +143,7 @@ func (s *TestSuiteCommon) TestExtractHandlerBypassCVE(c *check) {
 	req.Header.Set("X-Amz-Content-Sha256", unsignedPayloadTrailer)
 	req.Header.Set("X-Amz-Decoded-Content-Length", fmt.Sprintf("%d", len(testData)))
 	req.Header.Set("Content-Encoding", "aws-chunked")
-	
+
 	// Extract handler vulnerability: Missing authTypeStreamingUnsignedTrailer case
 	// This should fail signature verification but may be bypassed entirely
 
@@ -151,7 +151,7 @@ func (s *TestSuiteCommon) TestExtractHandlerBypassCVE(c *check) {
 	response, err = s.client.Do(req)
 	c.Assert(err, nil)
 
-	// VULNERABILITY TEST: After fix, extract handler attack should be blocked  
+	// VULNERABILITY TEST: After fix, extract handler attack should be blocked
 	// Attack should now fail with signature verification error
 	c.Assert(response.StatusCode, http.StatusForbidden)
 }
@@ -183,7 +183,7 @@ func (s *TestSuiteCommon) TestMixedAuthMethodsCVE(c *check) {
 	c.Assert(err, nil)
 
 	now := UTCNow()
-	credential := fmt.Sprintf("%s/%s/us-east-1/s3/aws4_request", 
+	credential := fmt.Sprintf("%s/%s/us-east-1/s3/aws4_request",
 		s.accessKey, now.Format(yyyymmdd))
 
 	// Add complete presigned query parameters
@@ -194,7 +194,7 @@ func (s *TestSuiteCommon) TestMixedAuthMethodsCVE(c *check) {
 	query.Set("X-Amz-Expires", "300")
 	query.Set("X-Amz-SignedHeaders", "host;x-amz-content-sha256")
 	query.Set("X-Amz-Signature", "fakesignaturethatshouldfailvalidation")
-	
+
 	parsedURL.RawQuery = query.Encode()
 
 	req, err := http.NewRequest(http.MethodPut, parsedURL.String(), nil)
@@ -209,9 +209,9 @@ func (s *TestSuiteCommon) TestMixedAuthMethodsCVE(c *check) {
 	req.Header.Set("X-Amz-Content-Sha256", unsignedPayloadTrailer)
 	req.Header.Set("X-Amz-Decoded-Content-Length", fmt.Sprintf("%d", len(testData)))
 	req.Header.Set("Content-Encoding", "aws-chunked")
-	
+
 	// Also add Authorization header with different/conflicting signature
-	authHeader := fmt.Sprintf("AWS4-HMAC-SHA256 Credential=%s, SignedHeaders=host;x-amz-content-sha256, Signature=conflictingsignature", 
+	authHeader := fmt.Sprintf("AWS4-HMAC-SHA256 Credential=%s, SignedHeaders=host;x-amz-content-sha256, Signature=conflictingsignature",
 		credential)
 	req.Header.Set("Authorization", authHeader)
 

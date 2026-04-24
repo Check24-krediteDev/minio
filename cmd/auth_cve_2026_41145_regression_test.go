@@ -66,7 +66,7 @@ func (s *TestSuiteCommon) TestLegitimateUnsignedTrailer(c *check) {
 
 	// This creates a legitimate unsigned trailer request with proper Authorization header
 	// containing valid signature for unsigned trailer payload
-	
+
 	// Execute legitimate request
 	response, err = s.client.Do(req)
 	c.Assert(err, nil)
@@ -100,7 +100,7 @@ func (s *TestSuiteCommon) TestValidPresignedRequest(c *check) {
 
 	// Build the base PUT URL
 	putURL := getPutObjectURL(s.endPoint, bucketName, objectName)
-	
+
 	req, err := http.NewRequest(http.MethodPut, putURL, bytes.NewReader(testData))
 	c.Assert(err, nil)
 	req.ContentLength = int64(len(testData))
@@ -142,9 +142,9 @@ func (s *TestSuiteCommon) TestValidAuthorizationHeader(c *check) {
 	testData := []byte("Standard S3 PUT with Authorization header")
 
 	// Use the standard test helper for signed requests
-	request, err = newTestSignedRequest(http.MethodPut, 
+	request, err = newTestSignedRequest(http.MethodPut,
 		getPutObjectURL(s.endPoint, bucketName, objectName),
-		int64(len(testData)), bytes.NewReader(testData), 
+		int64(len(testData)), bytes.NewReader(testData),
 		s.accessKey, s.secretKey, s.signer)
 	c.Assert(err, nil)
 
@@ -186,7 +186,7 @@ func (s *TestSuiteCommon) TestValidStreamingSignedRequest(c *check) {
 		s.accessKey, s.secretKey)
 	c.Assert(err, nil)
 
-	// Execute streaming signed request  
+	// Execute streaming signed request
 	response, err = s.client.Do(request)
 	c.Assert(err, nil)
 
@@ -215,8 +215,8 @@ func (s *TestSuiteCommon) TestMultipartUploadAuthentication(c *check) {
 
 	// Step 2: Initiate multipart upload
 	objectName := "multipart-auth-test.txt"
-	
-	request, err = newTestSignedRequest(http.MethodPost, 
+
+	request, err = newTestSignedRequest(http.MethodPost,
 		getNewMultipartURL(s.endPoint, bucketName, objectName),
 		0, nil, s.accessKey, s.secretKey, s.signer)
 	c.Assert(err, nil)
@@ -231,7 +231,7 @@ func (s *TestSuiteCommon) TestMultipartUploadAuthentication(c *check) {
 
 	// Step 3: Upload a part with proper authentication
 	partData := []byte("Multipart upload part with proper authentication")
-	
+
 	request, err = newTestSignedRequest(http.MethodPut,
 		getPartUploadURL(s.endPoint, bucketName, objectName, uploadID, "1"),
 		int64(len(partData)), bytes.NewReader(partData),
@@ -240,7 +240,7 @@ func (s *TestSuiteCommon) TestMultipartUploadAuthentication(c *check) {
 
 	response, err = s.client.Do(request)
 	c.Assert(err, nil)
-	
+
 	// Multipart part upload should succeed with proper auth
 	c.Assert(response.StatusCode, http.StatusOK)
 

@@ -99,7 +99,6 @@ func isRequestUnsignedTrailerV4(r *http.Request) bool {
 		r.Method == http.MethodPut
 }
 
-
 // Authorization type.
 //
 //go:generate stringer -type=authType -trimprefix=authType $GOFILE

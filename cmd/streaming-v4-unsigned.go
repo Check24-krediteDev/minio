@@ -34,13 +34,13 @@ func verifyUnsignedTrailerSignature(req *http.Request, hasAuthHeader bool) APIEr
 		// Standard Authorization header signature verification
 		return doesSignatureMatch(unsignedPayloadTrailer, req, globalSite.Region(), serviceS3)
 	}
-	
+
 	// CVE-2026-41145 Fix: Verify query-string credentials when no Authorization header
 	// This prevents signature bypass when unsigned trailer is combined with presigned parameters
 	if isRequestPresignedSignatureV4(req) {
 		return doesPresignedSignatureMatch(unsignedPayloadTrailer, req, globalSite.Region(), serviceS3)
 	}
-	
+
 	// No signature required for genuine unsigned requests
 	return ErrNone
 }
